@@ -1,6 +1,8 @@
 package main
 
 import (
+	//"github.com/deckarep/golang-set"
+	//"container/list"
 	"encoding/json"
 	"crypto/sha256"
 	"encoding/hex"
@@ -12,11 +14,11 @@ var hash = sha1.New()
 var hash256 = sha256.New()
 
 type Block struct {
-	Index        int       `json:"index"`
-	Timestamp    time.Time `json:"timestamp"`
-	Transactions []json    `json:"transactions"`
-	Proof        int       `json:"proof"`
-	PreviousHash string    `json:"previous_hash"`
+	Index        int           `json:"index"`
+	Timestamp    time.Time     `json:"timestamp"`
+	Transactions []Transaction `json:"transactions"`
+	Proof        int           `json:"proof"`
+	PreviousHash string        `json:"previous_hash"`
 }
 
 type Transaction struct {
@@ -66,31 +68,24 @@ func (t *Blockchain) lastBlock() {
 
 }
 
-func (t *Blockchain) proofOfWork(lashBlock Block) int {
-	lastProof := lashBlock.Proof
-	lastHash := Hash(lashBlock)
+func (t *Blockchain) hash(block []string) string {
+	var blockString string
+	json.Unmarshal([]byte(block), &blockString)
+	hash256.Write([]byte(blockString))
+	hashResult := hex.EncodeToString(hash256.Sum(nil))
+	return hashResult
+}
+
+func (t *Blockchain) proofOfWork(lastProof int) int {
 	proof := 0
-	for !ValidProof(lastProof, proof, lastHash) {
+	for !ValidProof(lastProof, proof) {
 		proof += 1
 	}
 	return 0
 }
 
-func Hash(block Block) string {
-	var blockString string
-	json.Unmarshal([]byte(block), &blockString)
-	return Sha256(blockString)
-}
-
-func ValidProof(lastProof int, proof int, lastHash string) bool {
-	guess := string(lastProof) + string(proof) + lastHash
-	guessHash := Sha256(guess)
-	return guessHash[:4] == "0000"
-}
-
-func Sha256(str string) string {
-	hash256.Write([]byte(str))
-	return hex.EncodeToString(hash256.Sum(nil))
+func ValidProof(lastProof int, proof int) bool {
+	return false
 }
 
 func Mine() {
